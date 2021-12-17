@@ -1,4 +1,5 @@
-import numpy as np 
+import numpy as np
+from numpy.core.records import array 
 windowWidth = 8 
 numberOfCells = 20
 def getBaseline(img):
@@ -11,7 +12,9 @@ def getBaseline(img):
 
 def getCenterOfGravity(window):
     indecies = np.argwhere(window == 1)
-    centerOfGravity = np.sum(indecies,axis =0)//window.shape
+    if(len(indecies)==0):
+        return np.zeros(2)
+    centerOfGravity = np.mean(indecies,axis =0)
     return centerOfGravity
 
 
@@ -27,29 +30,35 @@ def slidingWindowFeatures(img):
     h = H//n
     x1 = img.shape[0]-1
     x2 = x1-w
-    pervg = getCenterOfGravity(img[max(x2,0):x1,:])+(w,0)
+    pervg = getCenterOfGravity(img[max(x2,0):x1,:])+np.array([w,0])
     # loop through windows
     while x1 >0:
         window = img[max(x2,0):x1,:]
         x1 = x2
         x2 -= w 
-
+        f1 = 0
+        f2 = 0
+        y1 = H
+        y2 = H-h
+        bi1 =0
         # r(j): the number of foreground pixels in the jth row of a frame.
         r = np.sum(window,axis=0)
         # g center of gravity 
         g = getCenterOfGravity(window)
         # f3 = g(t)-g(t-1)
-        f3 = g - pervg
+        f3,f4 = (g - pervg)
         # f4 = (g-L)/H
-        f4 = (g-LB)/H
+        f5,f6 = ((g-LB)/H)
         # f5 = sum(r(j)) from L+1 to h / H*W 
-        f5 = np.sum(r[LB+1:H])/H*w
+        f7 = np.sum(r[LB+1:H])/H*w
         # f6 = sum(r(j)) from 1 to L-1 / H*W 
-        f6 = np.sum(r[:LB])/H*w
+        f8 = np.sum(r[:LB])/H*w
         # loop through cells
+
+
+        f9 =(g[1]/H)*3
+
         cells = []
-        y1 = H
-        y2 = H-h
         while y1>0:
             # slicing the cell
             cells.append(window[:,max(y2,0):y1])
@@ -69,8 +78,13 @@ def slidingWindowFeatures(img):
             f2 += abs(bi0 - bi1)    
         f1 /= (H*w)
         f21to28 = np.sum(window,axis =1)
-        current_feature_vector= [f1,f2,f3,f4,f5,f6]
+        
+        if(len(f21to28)<8):
+            f21to28 = np.concatenate((f21to28,np.zeros(8-len(f21to28))))
+
+        
+        current_feature_vector= [LB,UB,f1,f2,f3,f4,f5,f6,f7,f8]
         current_feature_vector+=list(f21to28)
         features.append(current_feature_vector)
-    return features
+    return np.array(features)
     
