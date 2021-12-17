@@ -1,18 +1,61 @@
 import cv2
-from preproccessing import binraization
-from featuresExtraction import getBaseline,slidingWindowFeatures
-for i in range(1,9):
+from preprocessing import binraization
+from featureExtraction import getBaseline,slidingWindowFeatures
+import os
+from model import Model
+from sklearn.model_selection import train_test_split
+import numpy as np
 
-    file = "ACdata_base/1/001{}.jpg".format(i)
-    print(file)
-    img = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
-    if img[0,0]<150:
-        img =255-img
-    cv2.imwrite("testing/{}orignial.jpg".format(i),img)
-    img = binraization(img,t=30)
-    (lowerBaseline,upperBaseline) = getBaseline(img)
+# seperate test and train data
+train = []
+test = []
+for fnt in range(Model.FONTS_NO):
+    file_names = os.listdir(f"ACdata_base/{fnt+1}")
+    both = train_test_split(file_names, test_size=.2)
+    train.append(both[0])
+    test.append(both[1])
 
-    cv2.line(img,(0,lowerBaseline),(img.shape[1],lowerBaseline),(0,0,0),2)
-    cv2.line(img,(0,upperBaseline),(img.shape[1],upperBaseline),(0,0,0),2)
-    output = slidingWindowFeatures(img)
-    cv2.imwrite("testing/{}.jpg".format(i),img)
+# train
+model = Model()
+for fnt in range(Model.FONTS_NO):
+    X = []
+    for file_name in train[fnt]:
+        file_path = f"ACdata_base/{fnt+1}/{file_name}"
+        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+
+        if img[0,0]<150:
+            img =255-img
+
+        img = binraization(img,t=30)
+
+        output = slidingWindowFeatures(img)
+
+        X.extend(output)
+
+    model.fit(X, fnt)
+
+# test
+
+# train
+accuracies = []
+for fnt in range(Model.FONTS_NO):
+    correctly_classified = 0
+    for file_name in test[fnt]:
+        file_path = f"ACdata_base/{fnt+1}/{file_name}"
+        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+
+        if img[0,0]<150:
+            img =255-img
+
+        img = binraization(img,t=30)
+
+        output = slidingWindowFeatures(img)
+
+        label = model.predict(output)
+        if label == fnt: correctly_classified += 1
+
+    accuracy = correctly_classified / len(test[fnt])
+    accuracies.append(accuracy)
+    print(f"font {fnt} accuracy is {accuracy}")
+
+print(f"total accuracy is {np.mean(accuracies)}")
