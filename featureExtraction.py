@@ -3,15 +3,15 @@ from numpy.core.records import array
 import cv2
 
 windowWidth = 8 
-numberOfCells = 20
+numberOfCells = 3
 def getBaseline(img):
     
     hProjection = np.sum(1-img/255,axis=1)
     h =len(hProjection)
-    # hProjection = hProjection[h//10:]
+    hProjection = hProjection[h//10:]
     mean = np.mean(hProjection)
-    LB = np.argmax(hProjection)#+h//10
-    UB = np.argmax(hProjection>=mean)#+h//10
+    LB = np.argmax(hProjection)+h//10
+    UB = np.argmax(hProjection>=mean)+h//10
     return LB,UB
 
 
@@ -41,8 +41,8 @@ def slidingWindowFeatures(img,grayimg):
     while x1 >0:
         window = img[max(x2,0):x1,:]
         graywindow = grayimg[max(x2,0):x1,:]
-        x1 = x2
-        x2 -= w
+        x1 -= 1
+        x2 -= 1
         f1 = 0
         f2 = 0
         y1 = H
@@ -125,7 +125,7 @@ def slidingWindowFeatures(img,grayimg):
         
         current_feature_vector= [LB,UB,f1,f2,f3,f4,f5,f6,f7,f8,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21]
         current_feature_vector+=list(f21to28)
-        current_feature_vector+=(getHOG(graywindow))
+        # current_feature_vector+=(getHOG(graywindow))
         features.append(current_feature_vector)
     return np.array(features)
     

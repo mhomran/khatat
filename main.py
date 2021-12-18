@@ -1,4 +1,5 @@
 import cv2
+import imutils
 from preprocessing import binraization
 from featureExtraction import getBaseline,slidingWindowFeatures,getHOG
 from skimage.filters import threshold_otsu, threshold_local
@@ -24,11 +25,12 @@ for fnt in range(Model.FONTS_NO):
     for file_name in train[fnt]:
         file_path = f"ACdata_base/{fnt+1}/{file_name}"
         img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        img = imutils.resize(img,height =45)
         grayimg = np.copy(img)
         ret2,img = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         histg = cv2.calcHist([img],[0],None,[256],[0,256]) 
         background = np.argmax(histg)
-     
+        
 
         if background<50:
             img =255-img
@@ -52,7 +54,9 @@ for fnt in range(Model.FONTS_NO):
         file_path = f"ACdata_base/{fnt+1}/{file_name}"
         img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
         grayimg = np.copy(img)
+        img =imutils.resize(img,height =45)
         
+        ret2,img = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         histg = cv2.calcHist([img],[0],None,[256],[0,256]) 
         background = np.argmax(histg)
         
@@ -60,13 +64,17 @@ for fnt in range(Model.FONTS_NO):
             img =255-img
 
         
-        ret2,img = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        
 
         output = slidingWindowFeatures(img,grayimg)
 
         label = model.predict(output)
         if label == fnt: correctly_classified += 1
-
+        else:
+            print(label)
+            print(file_name)
+            # cv2.imshow("false prediction",img)
+            # cv2.waitKey(0)
     accuracy = correctly_classified / len(test[fnt])
     myacc+=correctly_classified
     total+=len(test[fnt])
