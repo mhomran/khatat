@@ -5,10 +5,13 @@ import cv2
 windowWidth = 8 
 numberOfCells = 20
 def getBaseline(img):
+    
     hProjection = np.sum(1-img/255,axis=1)
+    h =len(hProjection)
+    # hProjection = hProjection[h//10:]
     mean = np.mean(hProjection)
-    LB = np.argmax(hProjection)
-    UB = np.argmax(hProjection>=mean)
+    LB = np.argmax(hProjection)#+h//10
+    UB = np.argmax(hProjection>=mean)#+h//10
     return LB,UB
 
 
@@ -30,6 +33,7 @@ def slidingWindowFeatures(img,grayimg):
     H = img.shape[1]
     n = numberOfCells
     h = H//n
+    # h = 4 
     x1 = img.shape[0]-1
     x2 = x1-w
     pervg = getCenterOfGravity(img[max(x2,0):x1,:])+np.array([w,0])
@@ -38,7 +42,7 @@ def slidingWindowFeatures(img,grayimg):
         window = img[max(x2,0):x1,:]
         graywindow = grayimg[max(x2,0):x1,:]
         x1 = x2
-        x2 -= w 
+        x2 -= w
         f1 = 0
         f2 = 0
         y1 = H
@@ -57,9 +61,42 @@ def slidingWindowFeatures(img,grayimg):
         # f6 = sum(r(j)) from 1 to L-1 / H*W 
         f8 = np.sum(r[:LB])/H*w
         # loop through cells
-
-
         f9 =(g[1]/H)*3
+        # leftup concavity 
+        f10 = leftupConcavity(window)/H
+        # rightup concavity 
+        f11 = rightupConcavity(window)/H
+        # rightdown concavity 
+        f12 = rightdownConcavity(window)/H
+        # leftdown concavity
+        f13 = leftdownConcavity(window)/H
+        #virtcal concavity
+        f14 = verticalConcavity(window)/H
+
+        #horizontal concavity
+        f15 = horizontalConcavity(window)/H
+        
+
+        # core zone
+        # leftup concavity 
+
+        coreZone = np.copy(window[:,UB:LB+3])
+        try:
+            f16 = leftupConcavity(coreZone)/H
+        except:
+            print(LB,UB)
+        # rightup concavity 
+        f17 = rightupConcavity(coreZone)/H
+        # rightdown concavity 
+        f18 = rightdownConcavity(coreZone)/H
+        # leftdown concavity
+        f19 = leftdownConcavity(coreZone)/H
+        #virtcal concavity
+        f20 = verticalConcavity(coreZone)/H
+
+        #horizontal concavity
+        f21 = horizontalConcavity(coreZone)/H
+
 
         cells = []
         while y1>0:
@@ -86,7 +123,7 @@ def slidingWindowFeatures(img,grayimg):
             f21to28 = np.concatenate((f21to28,np.zeros(8-len(f21to28))))
 
         
-        current_feature_vector= [LB,UB,f1,f2,f3,f4,f5,f6,f7,f8]
+        current_feature_vector= [LB,UB,f1,f2,f3,f4,f5,f6,f7,f8,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21]
         current_feature_vector+=list(f21to28)
         current_feature_vector+=(getHOG(graywindow))
         features.append(current_feature_vector)
@@ -102,3 +139,95 @@ def getHOG(img):
         for j in range(mag.shape[1]):
             hist[np.uint16(angle[i,j])] += 1
     return hist
+
+def leftupConcavity(img):
+    
+    k1 = np.array([
+        [0,1,0],
+        [1,0,0],
+        [0,0,0]
+    ],np.uint8)
+    k2 = np.array([
+        [0,0,1],
+        [0,1,1],
+        [1,1,0]
+    ],np.uint8)
+    out1 = cv2.erode(img, k1, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 0 )
+    out2 = cv2.erode(1-img, k2, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 1 )
+    return np.sum(out1*out2)
+
+def rightupConcavity(img):
+    k1 = np.array([
+        [0,1,0],
+        [0,0,1],
+        [0,0,0]
+    ],np.uint8)
+    k2 = np.array([
+        [1,0,0],
+        [1,1,0],
+        [0,1,1]
+    ],np.uint8)
+    out1 = cv2.erode(img, k1, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 0 )
+    out2 = cv2.erode(1-img, k2, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 1 )
+    return np.sum(out1*out2)
+
+def rightdownConcavity(img):
+    k1 = np.array([
+        [0,0,0],
+        [0,0,1],
+        [0,1,0]
+    ],np.uint8)
+    k2 = np.array([
+        [0,1,1],
+        [1,1,0],
+        [1,0,0]
+    ],np.uint8)
+    out1 = cv2.erode(img, k1, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 0 )
+    out2 = cv2.erode(1-img, k2, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 1 )
+    return np.sum(out1*out2)   
+
+def leftdownConcavity(img):
+    k1 = np.array([
+        [0,0,0],
+        [1,0,0],
+        [0,1,0]
+    ],np.uint8)
+    k2 = np.array([
+        [1,1,0],
+        [0,1,1],
+        [0,0,1]
+    ],np.uint8)
+    out1 = cv2.erode(img, k1, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 0 )
+    out2 = cv2.erode(1-img, k2, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 1 )
+    return np.sum(out1*out2)   
+
+def verticalConcavity(img):
+    k1 = np.array([
+        [1,0,0],
+        [1,0,0],
+        [1,0,0]
+    ],np.uint8)
+    k2 = np.array([
+        [0,1,0],
+        [0,1,0],
+        [0,1,0]
+    ],np.uint8)
+    out1 = cv2.erode(img, k1, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 0 )
+    out2 = cv2.erode(1-img, k2, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 1 )
+    return np.sum(out1*out2)  
+
+
+def horizontalConcavity(img):
+    k1 = np.array([
+        [0,0,0],
+        [0,0,0],
+        [1,1,1]
+    ],np.uint8)
+    k2 = np.array([
+        [0,0,0],
+        [1,1,1],
+        [0,0,0]
+    ],np.uint8)
+    out1 = cv2.erode(img, k1, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 0 )
+    out2 = cv2.erode(1-img, k2, iterations=1,borderType=cv2.BORDER_CONSTANT,borderValue = 1 )
+    return np.sum(out1*out2)  
