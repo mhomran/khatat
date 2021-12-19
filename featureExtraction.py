@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from scipy.signal import find_peaks
 
-WINDOW_WIDTH = 15 
+WINDOW_WIDTH = 15
 CELLS_NO = 3
 WINDOW_SHIFT = WINDOW_WIDTH//2
 EPS = 1e-10
@@ -22,7 +22,7 @@ def getCenterOfGravity(window):
     return centerOfGravity
 
 
-def slidingWindowFeatures(img):
+def slidingWindowFeatures(img,grayimg):
     features = []
     # background = 0, forground =1 
     img = 1-img//255
@@ -30,8 +30,6 @@ def slidingWindowFeatures(img):
     LB, UB = getBaseline(img)
     w = WINDOW_WIDTH 
     H = img.shape[0]
-    n = CELLS_NO
-    h = H // n
     x1 = img.shape[1]-1 # last idx
     x2 = x1 - w # last idx - window size
     prevg = getCenterOfGravity(img[:, max(x2,0):x1])
@@ -39,14 +37,14 @@ def slidingWindowFeatures(img):
     while x1 > 0:
         window = img[:, max(x2,0):x1]
         if window.shape[1] != w: break
-
+        graywindow = grayimg[:,max(x2,0):x1]
         x1 -= WINDOW_SHIFT
         x2 -= WINDOW_SHIFT
-        f1 = 0
         # r(j): the number of foreground pixels in the jth row of a frame.
         r = np.sum(window, axis=1)
         # g center of gravity 
         g = getCenterOfGravity(window)
+        f1 = np.sum(window)/(H*w)
         # f3 = g(t)-g(t-1)
         f3,f4 = (g - prevg)
         prevg = g
@@ -64,7 +62,7 @@ def slidingWindowFeatures(img):
         core_zone = window[UB:LB+3, :]
         f16tof21 = get_concavity_features(core_zone, H)
 
-        f1 = np.mean(window)
+
         f21to28 = np.sum(window,axis =1)
         
         if(len(f21to28)<w):
@@ -97,11 +95,12 @@ def slidingWindowFeatures(img):
 
         current_feature_vector= [f1,f3,f4,f5,f6,f7,f8, 
                                 *f10tof15, 
-                                *f16tof21]
-                                # N1, N2, N1_N2]
-                                # h_extremas, v_extremas,
-                                # *hProjection, *vProjection]
-
+                                *f16tof21,
+                                N1, N2, N1_N2,
+                                h_extremas, v_extremas]
+                                # *hProjection, *vProjection,
+                                # *f21to28]
+        # current_feature_vector+=(getHOG(graywindow))
         # current_feature_vector+=list(f21to28)
         features.append(current_feature_vector)
     return np.array(features)
@@ -213,3 +212,14 @@ def get_concavity_features(window, H):
     fh = horizontal_concavity(window)/H
 
     return [flu, fru, frd, fld, fv, fh]
+
+def getHOG(img):
+    hist = [0]*8
+    gx = cv2.Sobel(img, cv2.CV_32F, 1, 0, ksize=1)
+    gy = cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=1)
+    mag, angle = cv2.cartToPolar(gx, gy, angleInDegrees=True)
+    angle /= 45
+    for i in range(mag.shape[0]):
+        for j in range(mag.shape[1]):
+            hist[np.uint16(angle[i,j])] += 1
+    return hist 
