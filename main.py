@@ -1,14 +1,10 @@
-import cv2
-import imutils
-from preprocessing import binraization
-from featureExtraction import getBaseline,slidingWindowFeatures,getHOG
-from skimage.filters import threshold_otsu, threshold_local
+from preprocessing import preprocess
+from featureExtraction import slidingWindowFeatures
 import os
 from model import Model
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
 import numpy as np
-from matplotlib import pyplot as plt
+
 # seperate test and train data
 train = []
 test = []
@@ -24,61 +20,33 @@ for fnt in range(Model.FONTS_NO):
     X = []
     for file_name in train[fnt]:
         file_path = f"ACdata_base/{fnt+1}/{file_name}"
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        img = imutils.resize(img,height =45)
-        grayimg = np.copy(img)
-        ret2,img = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        histg = cv2.calcHist([img],[0],None,[256],[0,256]) 
-        background = np.argmax(histg)
-        
 
-        if background<50:
-            img =255-img
-        output = slidingWindowFeatures(img,grayimg)
+        preprocessed = preprocess(file_path)
+        output = slidingWindowFeatures(preprocessed)
         
         X.extend(output)
 
-    
-
-
-    # X =preprocessing.normalize(X)
     model.fit(X, fnt)
-
+    np.savetxt(f"data{fnt+1}.csv",X,delimiter=',')
 # test
 accuracies = []
-myacc =0
 total =0
 for fnt in range(Model.FONTS_NO):
     correctly_classified = 0
     for file_name in test[fnt]:
         file_path = f"ACdata_base/{fnt+1}/{file_name}"
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        grayimg = np.copy(img)
-        img =imutils.resize(img,height =45)
-        
-        ret2,img = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        histg = cv2.calcHist([img],[0],None,[256],[0,256]) 
-        background = np.argmax(histg)
-        
-        if background<50:
-            img =255-img
-
-        
-        
-
-        output = slidingWindowFeatures(img,grayimg)
+        preprocessed = preprocess(file_path)
+        output = slidingWindowFeatures(preprocessed)
 
         label = model.predict(output)
         if label == fnt: correctly_classified += 1
-        else:
-            print(label)
-            print(file_name)
+        # else:
+            # print(label)
+            # print(file_name)
             # cv2.imshow("false prediction",img)
             # cv2.waitKey(0)
     accuracy = correctly_classified / len(test[fnt])
-    myacc+=correctly_classified
     total+=len(test[fnt])
     accuracies.append(accuracy)
     print(f"font {fnt+1} accuracy is {accuracy}")
-print(f"total accurcy {myacc/total}")
 print(f"total accuracy is {np.mean(accuracies)}")

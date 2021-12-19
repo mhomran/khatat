@@ -33,3 +33,15 @@ def binraization(img,n=8,t=15):
     sum = (a-b-c+d)*(100-t)/100
     outputimg = (img>sum/count)*255
     return outputimg[s:-s,s:-s]
+import cv2, imutils
+
+def preprocess(file_path):
+    img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+    _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # img = imutils.resize(img, height=45)
+    counts = np.bincount(img.flatten())
+    background = np.argmax(counts)
+    if background < 50:
+        img = 255 - img
+
+    return img

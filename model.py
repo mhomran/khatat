@@ -4,7 +4,7 @@ import numpy as np
 class Model:
   FONTS_NO = 9
   def __init__(self):
-    self.models = [GaussianMixture(n_components=20) for _ in range(Model.FONTS_NO)]
+    self.models = [GaussianMixture(n_components=10) for _ in range(Model.FONTS_NO)]
 
   def fit(self, X, y):
     self.models[y].fit(X)
