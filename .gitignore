@@ -1,6 +1,11 @@
-papers
-DBs
 __pycache__
+
+papers
+
+DBs
+
 model.pkl
+
+data
 time.txt
 results.txt
