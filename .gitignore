@@ -1,4 +1,6 @@
 papers
-ACdata_base
+DBs
 __pycache__
 model.pkl
+time.txt
+results.txt
