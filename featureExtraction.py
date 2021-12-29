@@ -37,7 +37,6 @@ def slidingWindowFeatures(img,grayimg):
     while x1 > 0:
         window = img[:, max(x2,0):x1]
         if window.shape[1] != w: break
-        graywindow = grayimg[:,max(x2,0):x1]
         x1 -= WINDOW_SHIFT
         x2 -= WINDOW_SHIFT
         # r(j): the number of foreground pixels in the jth row of a frame.
@@ -61,7 +60,6 @@ def slidingWindowFeatures(img,grayimg):
         # core zone
         core_zone = window[UB:LB+3, :]
         f16tof21 = get_concavity_features(core_zone, H)
-
 
         f21to28 = np.sum(window,axis =1)
         

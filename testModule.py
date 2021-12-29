@@ -44,13 +44,15 @@ def test_model(model, test):
         correctly_classified = 0
 
         labels = []
+        file_pathes = []
         with ProcessPoolExecutor() as executor:            
             for file_name in test[fnt]:
                 file_path = f"DBs/ACdata_base/{fnt+1}/{file_name}"
+                file_pathes.append(file_path)
                 labels.append(executor.submit(predict_img, file_path, model))
         
         i = 0
-        for label in labels:
+        for idx, label in enumerate(labels):
             i += 1
             
             label, img_time = label.result()
@@ -59,7 +61,7 @@ def test_model(model, test):
                 correctly_classified += 1
                 total_cclassified += 1
             else:
-                print(f"{file_path} GT: {labels_to_strings[fnt+1]}, predicted: {labels_to_strings[label+1]}")
+                print(f"{file_pathes[idx]} GT: {labels_to_strings[fnt+1]}, predicted: {labels_to_strings[label+1]}")
                 # cv2.imshow("false prediction",preprocessed)
                 # cv2.waitKey(0)
 
@@ -97,7 +99,7 @@ def classify(model, test):
         
         label, img_time = label.result()
 
-        f_result.write(str(label))
+        f_result.write(str(label + 1))
         f_time.write(str(round(img_time/cpu_count(), 2)))
         if i != len(test): 
             f_result.write('\n')
