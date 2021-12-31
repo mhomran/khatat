@@ -51,9 +51,7 @@ def test_model(model, test):
                 file_pathes.append(file_path)
                 labels.append(executor.submit(predict_img, file_path, model))
         
-        i = 0
         for idx, label in enumerate(labels):
-            i += 1
             
             label, img_time = label.result()
 
@@ -67,7 +65,7 @@ def test_model(model, test):
 
             f_result.write(str(label))
             f_time.write(str(round(img_time/cpu_count(), 2)))
-            if i != len(test[fnt]): 
+            if idx != len(labels)-1 or fnt != Model.FONTS_NO-1: 
                 f_result.write('\n')
                 f_time.write('\n')
 
