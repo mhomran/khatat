@@ -80,9 +80,9 @@ def test_model(model, test):
     f_result.close()
     f_time.close()
     
-def classify(model, test):
-    f_result = open("results.txt", "w")
-    f_time = open("time.txt", "w")
+def classify(model, test, output_folder_path):
+    f_result = open(f"{output_folder_path}/results.txt", "w")
+    f_time = open(f"{output_folder_path}/times.txt", "w")
     
 
     labels = []

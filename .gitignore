@@ -7,5 +7,6 @@ DBs
 model.pkl
 
 data
-time.txt
-results.txt
+out
+
+Document
