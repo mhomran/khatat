@@ -33,8 +33,8 @@ def test_model(model, test):
         9: "Squar-kufic"
     }
 
-    f_result = open("results.txt", "w")
-    f_time = open("time.txt", "w")
+    f_result = open("out/results.txt", "w")
+    f_time = open("out/times.txt", "w")
     
     start = perf_counter()
 
